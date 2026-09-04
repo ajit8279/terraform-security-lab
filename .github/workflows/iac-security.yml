@@ -1,0 +1,73 @@
+name: IaC Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-security:
+    name: Terraform Security Checks
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # --------------------------------------------------
+      # Checkout
+      # --------------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      # --------------------------------------------------
+      # Terraform
+      # --------------------------------------------------
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+
+      # --------------------------------------------------
+      # Terraform Format
+      # --------------------------------------------------
+
+      - name: Terraform Format Check
+        working-directory: workload
+        run: terraform fmt -check -recursive
+
+
+      # --------------------------------------------------
+      # Terraform Init
+      # --------------------------------------------------
+
+      - name: Terraform Init
+        working-directory: workload
+        run: terraform init -backend=false
+
+
+      # --------------------------------------------------
+      # Terraform Validate
+      # --------------------------------------------------
+
+      - name: Terraform Validate
+        working-directory: workload
+        run: terraform validate
+
+
+      # --------------------------------------------------
+      # Checkov
+      # --------------------------------------------------
+
+      - name: Install Checkov
+        run: pip install checkov
+
+
+      - name: Checkov IaC Security Scan
+        run: checkov -d .
